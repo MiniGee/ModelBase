@@ -56,12 +56,23 @@ class ModelBase():
             # Average values
             avgs = [MovingAvg(100)] * len(self._metrics)
             total_avgs = [0.0] * len(self._metrics)
+            testing_avgs = [0.0] * len(self._metrics)
 
             progress = tqdm(range(mb_per_epoch))
 
             for mb in progress:
                 # Train
-                metrics = self._train_mb(mb_size)
+                batch = self._loader.get_training_batch(mb_size)
+                metrics = self._train_mb(batch)
+
+                # Do testing if needed
+                if mb % test_freq == 0:
+                    batch = self._loader.get_testing_batch(mb_size)
+                    test_metrics = self._test_mb(batch)
+
+                    # Update test metrics
+                    for i in len(metrics):
+                        testing_avgs[i] += test_metrics[i]
 
                 # Update metrics
                 prog_label = ''
@@ -80,7 +91,18 @@ class ModelBase():
             self._model.save_weights(fname)
 
 
-    # Given the minibatch size, do one iteration of training, and return targeted metrics
-    def _train_mb(self, mb_size):
-        # Override this
-        return []
+    # Given batch data, run one iteration of training
+    def _train_mb(self, batch):
+        # Default implementation of train minibatch
+
+        # This assumes that batch[0] are the features and batch[1] are the labels
+
+        return self._model.train_on_batch(batch[0], batch[1])
+
+
+    def _test_mb(self, batch):
+        # Default implementation of test minibatch
+
+        # This assumes that batch[0] are the features and batch[1] are the labels
+
+        return self._model.test_on_batch(batch[0], batch[1])
