@@ -1,11 +1,6 @@
 
 import os
 
-from keras.layers import *
-from keras.losses import *
-from keras.optimizers import *
-from keras.models import Model
-
 from tqdm import tqdm
 
 from utils import MovingAvg
