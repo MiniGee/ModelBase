@@ -7,8 +7,9 @@ import numpy as np
 
 class LoaderBase():
 
-    def __init__(self, data_dir, dtype = np.float32):
+    def __init__(self, data_dir, data_ext, dtype = np.float32):
         self._data_dir = data_dir
+        self._data_ext = data_ext
         # Create data directory if needed
         if not os.path.exists(data_dir):
             os.mkdir(data_dir)
@@ -24,7 +25,7 @@ class LoaderBase():
 
     def load(self, num_to_load = -1):
         # Get all data files in directory
-        fnames = glob(os.path.join(self._data_dir, '*.dat'))
+        fnames = glob(os.path.join(self._data_dir, '*.%s' % self._data_ext))
         # If custom number to load, choose random sample
         if num_to_load >= 0:
             fnames = random.sample(fnames, num_to_load)
