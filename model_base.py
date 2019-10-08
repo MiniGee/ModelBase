@@ -8,13 +8,19 @@ from .utils import MovingAvg
 
 class ModelBase():
 
-    def __init__(self, name, loader):
+    def __init__(self, name, loader, log_fname = ''):
         self._name = name
         self._model = None
         self._loader = loader
 
         self._epoch = 1
         self._metrics = []
+
+        # Set default log file name if none provided
+        if len(log_fname) == 0:
+            self._log_fname = '%s.log' % name
+        else:
+            self._log_fname = log_fname
 
 
     def create(self):
@@ -49,6 +55,15 @@ class ModelBase():
         # Calculate minibatches per epoch
         mb_per_epoch = self._loader.get_epoch_size() // mb_size
 
+        # Setup log file
+        if os.path.exists(self._log_fname):
+            with open(self._log_fname, 'r') as f:
+                log_file = f.read()
+        else:
+            log_file = ''
+
+
+        # Start epochs
         for epoch in range(start, num_epochs + 1):
             self._epoch = epoch
             print('Epoch', 1)
@@ -60,6 +75,7 @@ class ModelBase():
 
             progress = tqdm(range(mb_per_epoch))
 
+            # Train all minibatches in epoch
             for mb in progress:
                 # Train
                 batch = self._loader.get_training_batch(mb_size)
@@ -71,12 +87,12 @@ class ModelBase():
                     test_metrics = self._test_mb(batch)
 
                     # Update test metrics
-                    for i in len(metrics):
+                    for i in range(len(metrics)):
                         testing_avgs[i] += test_metrics[i]
 
                 # Update metrics
                 prog_label = ''
-                for i in len(metrics):
+                for i in range(len(metrics)):
                     avgs[i].add(metrics[i])
                     total_avgs[i] += metrics[i]
 
@@ -84,11 +100,19 @@ class ModelBase():
 
                 progress.set_description(prog_label)
 
+
             # Save weights
             if not os.path.exists(save_dir):
                 os.mkdir(save_dir)
             fname = os.path.join(save_dir, '%s_%d.hdf5' % (self._name, epoch))
             self._model.save_weights(fname)
+
+            # Write log file
+            log_file += 'Epoch %d\n' % epoch
+            for i in range(len(metrics)):
+                log_file += '%s: %.3f\n' % (metrics[i], total_avgs[i] / mb_per_epoch)
+            with open(self._log_fname, 'w+') as f:
+                f.write(log_file)
 
 
     # Given batch data, run one iteration of training
