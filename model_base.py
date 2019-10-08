@@ -3,7 +3,7 @@ import os
 
 from tqdm import tqdm
 
-from utils import MovingAvg
+from .utils import MovingAvg
 
 
 class ModelBase():
@@ -13,7 +13,7 @@ class ModelBase():
         self._model = None
         self._loader = loader
 
-        self._epoch = 2
+        self._epoch = 1
         self._metrics = []
 
 

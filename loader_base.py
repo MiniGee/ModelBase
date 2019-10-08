@@ -4,6 +4,7 @@ from glob import glob
 import random
 
 import numpy as np
+from tqdm import tqdm
 
 class LoaderBase():
 
@@ -30,7 +31,8 @@ class LoaderBase():
         if num_to_load >= 0:
             fnames = random.sample(fnames, num_to_load)
 
-        for fname in fnames:
+        print('Loading data...')
+        for fname in tqdm(fnames):
             self._load_file(fname)
 
         self._x_train = np.array(self._x_train, dtype = self._dtype)
