@@ -87,12 +87,12 @@ class ModelBase():
                     test_metrics = self._test_mb(batch)
 
                     # Update test metrics
-                    for i in range(len(metrics)):
+                    for i in range(len(self._metrics)):
                         testing_avgs[i] += test_metrics[i]
 
                 # Update metrics
                 prog_label = ''
-                for i in range(len(metrics)):
+                for i in range(len(self._metrics)):
                     avgs[i].add(metrics[i])
                     total_avgs[i] += metrics[i]
 
@@ -101,6 +101,13 @@ class ModelBase():
                 progress.set_description(prog_label)
 
 
+            # Print testing metrics
+            if len(testing_avgs) > 0:
+                print('Testing metrics:')
+                for i in range(len(self._metrics)):
+                    print('%s: %.3f' % (self._metrics[i], testing_avgs[i] / len(testing_avgs)))
+                print('')
+
             # Save weights
             if not os.path.exists(save_dir):
                 os.mkdir(save_dir)
@@ -108,9 +115,11 @@ class ModelBase():
             self._model.save_weights(fname)
 
             # Write log file
-            log_file += 'Epoch %d\n' % epoch
+            log_file += '\nEpoch %d\n' % epoch
             for i in range(len(metrics)):
-                log_file += '%s: %.3f\n' % (metrics[i], total_avgs[i] / mb_per_epoch)
+                log_file += '%s: %.3f\n' % (self._metrics[i], total_avgs[i] / mb_per_epoch)
+                log_file += 'Test %s: %.3f' % (self._metrics[i], testing_avgs[i] / len(testing_avgs))
+                
             with open(self._log_fname, 'w+') as f:
                 f.write(log_file)
 
