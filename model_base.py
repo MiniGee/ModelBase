@@ -57,6 +57,11 @@ class ModelBase():
 
         # Setup log file
         if os.path.exists(self._log_fname):
+            if self._epoch == 1:
+                os.remove(self._log_fname)
+                with open(self._log_fname, 'w'):
+                    pass
+
             with open(self._log_fname, 'r') as f:
                 log_file = f.read()
         else:
@@ -66,12 +71,13 @@ class ModelBase():
         # Start epochs
         for epoch in range(start, num_epochs + 1):
             self._epoch = epoch
-            print('Epoch', 1)
+            print('Epoch', epoch)
 
             # Average values
             avgs = [MovingAvg(100)] * len(self._metrics)
             total_avgs = [0.0] * len(self._metrics)
             testing_avgs = [0.0] * len(self._metrics)
+            num_tests = 0
 
             progress = tqdm(range(mb_per_epoch))
 
@@ -85,6 +91,7 @@ class ModelBase():
                 if mb % test_freq == 0:
                     batch = self._loader.get_testing_batch(mb_size)
                     test_metrics = self._test_mb(batch)
+                    num_tests += 1
 
                     # Update test metrics
                     for i in range(len(self._metrics)):
@@ -105,7 +112,7 @@ class ModelBase():
             if len(testing_avgs) > 0:
                 print('Testing metrics:')
                 for i in range(len(self._metrics)):
-                    print('%s: %.3f' % (self._metrics[i], testing_avgs[i] / len(testing_avgs)))
+                    print('%s: %.3f' % (self._metrics[i], testing_avgs[i] / num_tests))
                 print('')
 
             # Save weights
@@ -117,8 +124,8 @@ class ModelBase():
             # Write log file
             log_file += '\nEpoch %d\n' % epoch
             for i in range(len(metrics)):
-                log_file += '%s: %.3f\n' % (self._metrics[i], total_avgs[i] / mb_per_epoch)
-                log_file += 'Test %s: %.3f' % (self._metrics[i], testing_avgs[i] / len(testing_avgs))
+                log_file += 'Train %s: %.3f\n' % (self._metrics[i], total_avgs[i] / mb_per_epoch)
+                log_file += 'Test  %s: %.3f\n' % (self._metrics[i], testing_avgs[i] / num_tests)
                 
             with open(self._log_fname, 'w+') as f:
                 f.write(log_file)
